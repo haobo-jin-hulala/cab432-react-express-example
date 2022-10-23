@@ -122,8 +122,8 @@ router.get('/delete', (req, res) => {
 
             let currentRules = getAllRules()
             currentRules.then(res => {
-                console.log(res.data[0].tag)
-                console.log(res.data[0].id)
+                /* console.log(res.data[0].tag)
+                console.log(res.data[0].id) */
                 deleteAllRules(res);
             })
             // Delete all rules. Comment the line below if you want to keep your existing rules.
@@ -164,6 +164,31 @@ async function getAllRules() {
 }
 
 
+// async function deleteAllRules(res) {
+
+
+//     console.log(id)
+//     const data = {
+//         "delete": {
+//             "ids": [`${id}`]
+//         }
+//     }
+
+//     const response = await needle('post', rulesURL, data, {
+//         headers: {
+//             "content-type": "application/json",
+//             "authorization": `Bearer ${token}`
+//         }
+//     })
+
+//     if (response.statusCode !== 200) {
+//         throw new Error(response.body);
+//     }
+
+//     return (response.body);
+
+
+// }
 async function deleteAllRules(rules) {
     if (!Array.isArray(rules.data)) {
         return null;
@@ -318,13 +343,10 @@ router.get('/getTweets/:query', (req, res) => {
             console.log(resultJSON)
             res.send(resultJSON)
 
-
-
             // const body = JSON.stringify([tweet.data, ...resultJSON]);
 
-
-
-
+        }).catch(error => {
+            console.log(error)
         })
 })
 

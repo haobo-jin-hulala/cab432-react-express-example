@@ -1,9 +1,10 @@
-import React, { useState } from 'react'
-import { Input, Button, Layout, Typography, Modal, List, Divider } from 'antd';
+import React, { useEffect, useState } from 'react'
+import { Alert, Input, Button, Layout, Typography, Modal, List, Divider, Statistic } from 'antd';
 import "./Home.css"
 import WordCountCloud from "./WordCountCloud"
+import { set } from 'lodash';
 
-const { Header, Footer, Sider, Content, } = Layout;
+const { Header, Content, } = Layout;
 const { Search } = Input;
 const { Title } = Typography;
 
@@ -16,7 +17,7 @@ const Home = () => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [modalText, setModalText] = useState('please click ok to get the tweets and wait twenty seconds');
   const [tag, setTag] = useState();
-  const [isGetTweets, setIsGetTweets] = useState(false)
+  const [isDeleteTag, setisDeleteTag] = useState(false)
   const [tweets, setTweets] = useState([])
   const [sentiment, setSentiment,] = useState(false)
   const [isSentiment, setIsSantiment] = useState(false)
@@ -31,14 +32,45 @@ const Home = () => {
   const [positiveWcData, setPositiveWcData] = useState(null)
   const [negativeWcData, setNegativeWcData] = useState(null)
 
+  //button disable
+  const [disable, setDisable] = useState(false)
+
+  const [tweetsNum, setTweetsNum] = useState(0)
+
+  const getTweets = () => {
+    fetch(`http://${local}/twitter/getTweets/${tag}`)
+      .then(res => res.json())
+      .then(res => {
+        console.log(res.map(res => res.text))
+        setTweetsNum(res.length)
+
+        setTweets(res.map(res => res.text))
+      })
+  }
+  useEffect(() => {
+
+    if (tag !== undefined) {
+
+      const interval = setInterval(() => {
+        console.log("1.2.3.4.5")
+        getTweets()
+      }, 4000)
+      return () => clearInterval(interval)
+    }
+
+  }, [tag])
+
   const onSearch = (value) => {
     if (value) {
       setTag(value)
       console.log(value)
       fetch(`http://${local}/twitter/add/${value}`)
 
-      showModal()
-      setIsGetTweets(false)
+
+      //setIsGetTweets(true)
+      setisDeleteTag(true)
+      setSentiment(false)
+      setDisable(true)
       setIsSantiment(false)
 
     } else {
@@ -49,21 +81,17 @@ const Home = () => {
 
 
 
-  const getTweets = () => {
-    fetch(`http://${local}/twitter/getTweets/${tag}`)
-      .then(res => res.json())
-      .then(res => {
-        console.log(res.map(res => res.text))
-        setTweets(res.map(res => res.text))
-      })
-    setIsGetTweets(false)
+  /*   const getTweets = () => {
+      setIsGetTweets(false)
+      setSentiment(true)
+  
+      setIsPoWordCloud(false)
+      setIsNeWordCloud(false)
+    } */
+  const deleteTag = () => {
+    fetch(`http://${local}/twitter/delete`)
     setSentiment(true)
-
-
-    setIsPoWordCloud(false)
-    setIsNeWordCloud(false)
-
-
+    setisDeleteTag(false)
   }
   const sentimentAnalysis = () => {
     fetch(`http://${local}/sen/${tag}`).then(res => res.json())
@@ -84,6 +112,7 @@ const Home = () => {
         setPositiveTweets(positiveT)
         setNegativeTweets(negativeT)
         setEmotionlessTweet(emotionlessT)
+        setDisable(false)
 
 
       })
@@ -109,27 +138,26 @@ const Home = () => {
       })
   }
 
-
-  const showModal = () => {
-    setOpen(true);
-    let secondsToGo = 15
-    /*    setModalText(`please click ok to get the tweets and wait ${secondsToGo} seconds`); */
-
-    const timer = setInterval(() => {
-      secondsToGo -= 1;
-      setModalText(`please click ok to get the tweets and wait ${secondsToGo} seconds`)
-    }, 1000);
-
-    setTimeout(() => {
-      fetch(`http://${local}/twitter/delete`)
-      setOpen(false);
-      //setConfirmLoading(false);
-      clearInterval(timer);
-      setIsGetTweets(true)
-      setIsPoWordCloud(false)
-      setIsNeWordCloud(false)
-    }, 15000);
-  };
+  /*   const showModal = () => {
+      setOpen(true);
+      let secondsToGo = 15
+  
+  
+      const timer = setInterval(() => {
+        secondsToGo -= 1;
+        setModalText(`please click ok to get the tweets and wait ${secondsToGo} seconds`)
+      }, 1000);
+  
+      setTimeout(() => {
+        fetch(`http://${local}/twitter/delete`)
+        setOpen(false);
+        //setConfirmLoading(false);
+        clearInterval(timer);
+        setIsGetTweets(true)
+        setIsPoWordCloud(false)
+        setIsNeWordCloud(false)
+      }, 15000);
+    }; */
 
   /*  const handleOk = () => {
      fetch(`http://${local}/twitter/add/${tag}`)
@@ -152,13 +180,13 @@ const Home = () => {
   */
 
   /*   const handleCancel = () => {
-      fetch(`http://${local}/twitter/delete`)
-      setOpen(false);
-      setIsGetTweets(false)
-      setIsPoWordCloud(false)
-      setIsNeWordCloud(false)
-    };
-   */
+     fetch(`http://${local}/twitter/delete`)
+     setOpen(false);
+     setIsGetTweets(false)
+     setIsPoWordCloud(false)
+     setIsNeWordCloud(false)
+   }; */
+
 
   /*  const countDown = () => {
      let secondsToGo = 20;
@@ -209,9 +237,10 @@ const Home = () => {
               enterButton="Search"
               size="large"
               onSearch={onSearch}
+              disabled={disable}
 
             />
-            <Modal
+            {/*   <Modal
 
               open={open}
               footer={null}
@@ -220,17 +249,26 @@ const Home = () => {
             >
               {modalText}
 
-            </Modal>
+            </Modal> */}
 
 
 
 
-            {isGetTweets === false ? <div></div> : <Button type="primary" onClick={getTweets} >get tweets</Button>}
+            {isDeleteTag === false ? <div></div> : <Button type="primary" onClick={deleteTag} >delete tag</Button>}
+
             {sentiment === false ? <div></div> : <Button type="primary" onClick={sentimentAnalysis} >sentiment Analysis</Button>}
 
           </div>
 
         </Content>
+
+        {disable === false ? <div></div> : <Alert message="Please wait twitters coming......" type="success" />}
+
+        {disable === false ? <div></div> : <Statistic title="Tweets count:" value={tweetsNum} />}
+
+
+
+
 
         {/* tweets area */}
         <Content>
@@ -287,8 +325,7 @@ const Home = () => {
 
 
 
-        {/* word cloud area */}
-        <Content>Content</Content>
+
       </Layout>
 
     </div>
